@@ -127,16 +127,5 @@ function getEmbedHead(
 ## Requirements
 
 - Iframe must support JavaScript execution (`sandbox="allow-scripts"`).
-- `"allow-same-origin"` is **not required** unless direct DOM access is needed.
 - The parent and iframe must allow communication via `postMessage` (CSP and
   embed restrictions must permit it).
-
-## Versioning
-
-This is version 1 of the Head Access Protocol (`HAP:request:1`). Future versions
-may include:
-
-- Structured metadata instead of raw HTML
-- Support for async updates (e.g., title changes)
-- Additional metadata scopes beyond `<head>`
-- Error handling or fallback messaging
