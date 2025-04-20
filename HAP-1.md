@@ -74,11 +74,14 @@ self.addEventListener("message", async (e) => {
 ### On the parent (requesting) side:
 
 ```ts
-function getEmbedHead(
+export function getEmbedHead(
     url: string | URL,
     timeout_ms = 5000,
 ): Promise<HeadMessage> {
+    const { resolve, reject, promise } = Promise.withResolvers<HeadMessage>();
+
     url = new URL(url);
+
     const iframe = document.createElement("iframe");
     iframe.src = url.href;
     iframe.sandbox.add("allow-scripts");
@@ -88,37 +91,29 @@ function getEmbedHead(
     iframe.style.userSelect = "none";
     document.body.append(iframe);
 
-    const promise = new Promise<HeadMessage>((resolve, reject) => {
-        iframe.onload = () => {
-            const iframeWindow = iframe.contentWindow;
-            if (!iframeWindow) {
-                reject(
-                    new Error(`Iframe contentWindow is null for ${url.href}`),
-                );
-                return;
-            }
-
-            const timeout = setTimeout(() => {
-                reject(
-                    new Error(
-                        `Timeout waiting for head metadata from ${url.href}`,
-                    ),
-                );
-            }, timeout_ms);
-
-            const channel = new MessageChannel();
-            channel.port1.onmessage = (event) => {
-                clearTimeout(timeout);
-                resolve(event.data);
-            };
-
-            iframeWindow.postMessage("HAP:request:1", "*", [channel.port2]);
-        };
-    });
-
     promise.finally(() => {
         iframe.remove();
     });
+
+    const timeout = setTimeout(() => {
+        reject(new Error(`Timeout waiting for head metadata from ${url.href}`));
+    }, timeout_ms);
+
+    iframe.onload = () => {
+        const iframeWindow = iframe.contentWindow;
+        if (!iframeWindow) {
+            reject(new Error(`Iframe contentWindow is null for ${url.href}`));
+            return;
+        }
+
+        const channel = new MessageChannel();
+        channel.port1.onmessage = (event) => {
+            clearTimeout(timeout);
+            resolve(event.data);
+        };
+
+        iframeWindow.postMessage("HAP:request:1", "*", [channel.port2]);
+    };
 
     return promise;
 }
