@@ -40,4 +40,4 @@ See [HAP-1](./HAP-1.md) for complete details and example implementations.
 
 ## License
 
-Public domain.
+[Public Domain](LICENSE)
